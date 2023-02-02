@@ -7,36 +7,23 @@ import (
 
 type Scheduler interface {
 	Submit(Request)
-	GetChan(chan Request)
+	//GetChan(chan Request)
+	GetWorker(chan Request)
+	Run()
 }
 
 type ConcurrentHandler struct {
-	Scheduler NormalScheduler
+	Scheduler Scheduler
 	Workers   int
 }
 
-type NormalScheduler struct {
-	requests chan Request
-}
-
-func (ns *NormalScheduler) Submit(req Request) {
-	//ns.requests <- req 出现死锁
-	go func() {
-		ns.requests <- req
-	}()
-}
-
-func (ns *NormalScheduler) GetChan(requests chan Request) {
-	ns.requests = requests
-}
-
 func (ch *ConcurrentHandler) Run(urls ...Request) {
-	tasks := make(chan Request)
+	//tasks := make(chan Request)
 	results := make(chan ParseRes)
-
-	ch.Scheduler.GetChan(tasks)
+	ch.Scheduler.Run()
+	//ch.Scheduler.GetChan(tasks)
 	for i := 0; i < ch.Workers; i++ {
-		CreateWorker(tasks, results)
+		CreateWorker(results, ch.Scheduler)
 	}
 
 	for _, url := range urls {
@@ -56,9 +43,11 @@ func (ch *ConcurrentHandler) Run(urls ...Request) {
 	}
 }
 
-func CreateWorker(tasks chan Request, results chan ParseRes) { //工人
+func CreateWorker(results chan ParseRes, s Scheduler) { //工人
+	tasks := make(chan Request)
 	go func() {
 		for {
+			s.GetWorker(tasks)
 			req := <-tasks
 			res, err := HandleTask(req)
 			if err != nil {

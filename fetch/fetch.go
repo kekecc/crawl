@@ -41,7 +41,10 @@ func ReturnUTF8(r io.Reader) *transform.Reader {
 	return transform.NewReader(r, encode.NewDecoder()) //转换
 }
 
+//var time_limit = time.Tick(100 * time.Millisecond)
+
 func Fetch(url string) ([]byte, error) {
+	//<-time_limit
 	// resp, err := http.Get(url)
 	// if err != nil {
 	// 	panic(err)
