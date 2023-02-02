@@ -10,11 +10,13 @@ type Scheduler interface {
 	//GetChan(chan Request)
 	GetWorker(chan Request)
 	Run()
+	Worker() chan Request
 }
 
 type ConcurrentHandler struct {
 	Scheduler Scheduler
 	Workers   int
+	DataSave  chan interface{}
 }
 
 func (ch *ConcurrentHandler) Run(urls ...Request) {
@@ -23,7 +25,7 @@ func (ch *ConcurrentHandler) Run(urls ...Request) {
 	ch.Scheduler.Run()
 	//ch.Scheduler.GetChan(tasks)
 	for i := 0; i < ch.Workers; i++ {
-		CreateWorker(results, ch.Scheduler)
+		CreateWorker(ch.Scheduler.Worker(), results, ch.Scheduler)
 	}
 
 	for _, url := range urls {
@@ -34,7 +36,11 @@ func (ch *ConcurrentHandler) Run(urls ...Request) {
 		res := <-results
 
 		for _, content := range res.Contents {
-			log.Println("get content: ", string(content.([]byte)))
+			//log.Println("get content: ", string(content.([]byte)))
+			s := string(content.([]byte))
+			go func() {
+				ch.DataSave <- s
+			}()
 		}
 
 		for _, resquest := range res.Requests {
@@ -43,8 +49,8 @@ func (ch *ConcurrentHandler) Run(urls ...Request) {
 	}
 }
 
-func CreateWorker(results chan ParseRes, s Scheduler) { //工人
-	tasks := make(chan Request)
+func CreateWorker(tasks chan Request, results chan ParseRes, s Scheduler) { //工人
+	//tasks := make(chan Request)
 	go func() {
 		for {
 			s.GetWorker(tasks)

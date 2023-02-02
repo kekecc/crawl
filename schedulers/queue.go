@@ -7,6 +7,10 @@ type QueueScheduler struct {
 	workers  chan chan handle.Request //工人 每个工人对应一个任务池
 }
 
+func (qs *QueueScheduler) Worker() chan handle.Request {
+	return make(chan handle.Request)
+}
+
 func (qs *QueueScheduler) Submit(req handle.Request) {
 	qs.requests <- req
 }

@@ -13,6 +13,17 @@ func (ns *NormalScheduler) Submit(req handle.Request) {
 	}()
 }
 
-func (ns *NormalScheduler) GetChan(requests chan handle.Request) {
-	ns.requests = requests
+// func (ns *NormalScheduler) GetChan(requests chan handle.Request) {
+// 	ns.requests = requests
+// }
+
+func (ns *NormalScheduler) Worker() chan handle.Request {
+	return ns.requests
+}
+
+func (ns *NormalScheduler) GetWorker(chan handle.Request) {
+}
+
+func (ns *NormalScheduler) Run() {
+	ns.requests = make(chan handle.Request)
 }
